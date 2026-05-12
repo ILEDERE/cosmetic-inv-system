@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <title>نظام إدارة مستحضرات التجميل</title>
+    <style>
+        body { font-family: Arial, sans-serif; background-color: #f4f4f4; padding: 20px; }
+        table { width: 100%; border-collapse: collapse; background: white; }
+        th, td { padding: 12px; border: 1px solid #ddd; text-align: center; }
+        th { background-color: #d81b60; color: white; }
+        .low-stock { color: red; font-weight: bold; }
+    </style>
+</head>
+<body>
+    <h2>لوحة تحكم المخازن والعمولات</h2>
+    <table>
+        <thead>
+            <tr>
+                <th>المنتج</th>
+                <th>المخزون</th>
+                <th>سعر البيع</th>
+                <th>عمولة المبيعات</th>
+                <th>الحالة</th>
+            </tr>
+        </thead>
+        <tbody id="product-table">
+            <!-- البيانات ستظهر هنا -->
+        </tbody>
+    </table>
+
+    <script>
+    // هذه الوظيفة تقوم بجلب البيانات من ملف JSON
+    fetch('products.json')
+        .then(response => response.json())
+        .then(data => {
+            const tableBody = document.getElementById('product-table');
+            tableBody.innerHTML = ''; // تنظيف الجدول أولاً
+
+            data.forEach(product => {
+                const row = `
+                    <tr>
+                        <td>${product.name}</td>
+                        <td class="${product.stock < product.min_limit ? 'low-stock' : ''}">
+                            ${product.stock}
+                        </td>
+                        <td>${product.selling_price} ريال</td>
+                        <td>${(product.selling_price * product.personal_sale_commission).toFixed(2)} ريال</td>
+                        <td>${product.stock > 0 ? 'متوفر' : 'نفذت الكمية'}</td>
+                    </tr>
+                `;
+                tableBody.innerHTML += row;
+            });
+        })
+        .catch(error => console.error('خطأ في جلب البيانات:', error));
+</script>
+    </script>
+</body>
+</html>
