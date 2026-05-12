@@ -9,15 +9,55 @@
             --primary-color: #d81b60;
             --bg-color: #f8f9fa;
         }
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: var(--bg-color); margin: 0; padding: 20px; color: #333; }
-        .container { max-width: 1000px; margin: auto; background: white; padding: 20px; border-radius: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
-        h2 { color: var(--primary-color); text-align: center; border-bottom: 2px solid var(--primary-color); padding-bottom: 10px; }
-        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-        th, td { padding: 12px; border: 1px solid #eee; text-align: center; }
-        th { background-color: var(--primary-color); color: white; }
-        tr:nth-child(even) { background-color: #fff5f8; }
-        .low-stock { color: #d32f2f; font-weight: bold; background-color: #ffebee; }
-        .badge { padding: 5px 10px; border-radius: 20px; font-size: 0.8em; color: white; }
+        body { 
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+            background-color: var(--bg-color); 
+            margin: 0; 
+            padding: 20px; 
+            color: #333; 
+        }
+        .container { 
+            max-width: 1000px; 
+            margin: auto; 
+            background: white; 
+            padding: 20px; 
+            border-radius: 10px; 
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1); 
+        }
+        h2 { 
+            color: var(--primary-color); 
+            text-align: center; 
+            border-bottom: 2px solid var(--primary-color); 
+            padding-bottom: 10px; 
+        }
+        table { 
+            width: 100%; 
+            border-collapse: collapse; 
+            margin-top: 20px; 
+        }
+        th, td { 
+            padding: 12px; 
+            border: 1px solid #eee; 
+            text-align: center; 
+        }
+        th { 
+            background-color: var(--primary-color); 
+            color: white; 
+        }
+        tr:nth-child(even) { 
+            background-color: #fff5f8; 
+        }
+        .low-stock { 
+            color: #d32f2f; 
+            font-weight: bold; 
+            background-color: #ffebee; 
+        }
+        .badge { 
+            padding: 5px 10px; 
+            border-radius: 20px; 
+            font-size: 0.8em; 
+            color: white; 
+        }
         .bg-success { background-color: #2e7d32; }
         .bg-danger { background-color: #c62828; }
     </style>
@@ -27,7 +67,7 @@
 <div class="container">
     <h2>لوحة تحكم المخازن والعمولات</h2>
     
-    <div id="loading-msg" style="text-align: center; padding: 20px;">جاري تحميل البيانات من المخزن...</div>
+    <div id="status-msg" style="text-align: center; padding: 20px;">جاري تحميل البيانات...</div>
 
     <table id="main-table" style="display: none;">
         <thead>
@@ -35,32 +75,39 @@
                 <th>المنتج</th>
                 <th>المخزون</th>
                 <th>سعر البيع</th>
-                <th>عمولتك (5%)</th>
+                <th>عمولة المبيعات (5%)</th>
+                <th>عمولة التحصيل (2%)</th>
                 <th>الحالة</th>
             </tr>
         </thead>
         <tbody id="product-table">
-            <!-- البيانات ستظهر هنا -->
+            <!-- ستظهر المنتجات الـ 40 هنا -->
         </tbody>
     </table>
 </div>
 
 <script>
-    async function fetchProducts() {
-        try {
-            // جلب البيانات مع إضافة طابع زمني لمنع التخزين المؤقت (Cache)
-            const response = await fetch('products.json?v=' + new Date().getTime());
-            if (!response.ok) throw new Error('الملف غير موجود');
-            
-            const data = await response.json();
-            const tableBody = document.getElementById('product-table');
-            const loadingMsg = document.getElementById('loading-msg');
-            const mainTable = document.getElementById('main-table');
+    async function loadInventory() {
+        const tableBody = document.getElementById('product-table');
+        const statusMsg = document.getElementById('status-msg');
+        const mainTable = document.getElementById('main-table');
 
+        try {
+            // جلب ملف products.json الموجود بجانب ملف index.html
+            const response = await fetch('./products.json');
+            
+            if (!response.ok) {
+                throw new Error('فشل في العثور على ملف المنتجات');
+            }
+
+            const data = await response.json();
+            
             tableBody.innerHTML = ''; 
 
             data.forEach(product => {
-                const commission = (product.selling_price * product.personal_sale_commission).toFixed(2);
+                // حساب العمولات بناءً على النسب المذكورة في ملف البيانات
+                const saleComm = (product.selling_price * product.personal_sale_commission).toFixed(2);
+                const collectComm = (product.selling_price * product.collection_commission).toFixed(2);
                 const isLow = product.stock < product.min_limit;
                 
                 const row = `
@@ -68,7 +115,8 @@
                         <td><strong>${product.name}</strong></td>
                         <td class="${isLow ? 'low-stock' : ''}">${product.stock}</td>
                         <td>${product.selling_price} ريال</td>
-                        <td style="color: #2e7d32; font-weight: bold;">${commission} ريال</td>
+                        <td style="color: #2e7d32; font-weight: bold;">${saleComm} ريال</td>
+                        <td style="color: #1976d2; font-weight: bold;">${collectComm} ريال</td>
                         <td>
                             <span class="badge ${product.stock > 0 ? 'bg-success' : 'bg-danger'}">
                                 ${product.stock > 0 ? 'متوفر' : 'نفذ'}
@@ -79,18 +127,17 @@
                 tableBody.innerHTML += row;
             });
 
-            loadingMsg.style.display = 'none';
+            statusMsg.style.display = 'none';
             mainTable.style.display = 'table';
 
         } catch (error) {
-            document.getElementById('loading-msg').innerHTML = 
-                `<p style="color:red;">خطأ في تحميل البيانات. تأكد من رفع ملف products.json بشكل صحيح.</p>`;
             console.error('Error:', error);
+            statusMsg.innerHTML = `<p style="color:red;">عذراً، حدث خطأ في جلب البيانات. تأكد من رفع ملف products.json في نفس المجلد.</p>`;
         }
     }
 
-    // التشغيل
-    window.onload = fetchProducts;
+    // تشغيل الدالة عند فتح الصفحة
+    window.onload = loadInventory;
 </script>
 
 </body>
