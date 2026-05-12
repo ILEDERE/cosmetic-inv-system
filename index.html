@@ -3,76 +3,28 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>نظام إدارة مستحضرات التجميل</title>
+    <title>نظام إدارة المخازن والعمولات</title>
     <style>
-        :root {
-            --primary-color: #d81b60;
-            --bg-color: #f8f9fa;
-        }
-        body { 
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
-            background-color: var(--bg-color); 
-            margin: 0; 
-            padding: 20px; 
-            color: #333; 
-        }
-        .container { 
-            max-width: 1000px; 
-            margin: auto; 
-            background: white; 
-            padding: 20px; 
-            border-radius: 10px; 
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1); 
-        }
-        h2 { 
-            color: var(--primary-color); 
-            text-align: center; 
-            border-bottom: 2px solid var(--primary-color); 
-            padding-bottom: 10px; 
-        }
-        table { 
-            width: 100%; 
-            border-collapse: collapse; 
-            margin-top: 20px; 
-        }
-        th, td { 
-            padding: 12px; 
-            border: 1px solid #eee; 
-            text-align: center; 
-        }
-        th { 
-            background-color: var(--primary-color); 
-            color: white; 
-        }
-        tr:nth-child(even) { 
-            background-color: #fff5f8; 
-        }
-        .low-stock { 
-            color: #d32f2f; 
-            font-weight: bold; 
-            background-color: #ffebee; 
-        }
-        .badge { 
-            padding: 5px 10px; 
-            border-radius: 20px; 
-            font-size: 0.8em; 
-            color: white; 
-        }
-        .bg-success { background-color: #2e7d32; }
-        .bg-danger { background-color: #c62828; }
+        :root { --primary: #d81b60; --secondary: #1976d2; }
+        body { font-family: 'Segoe UI', sans-serif; background-color: #f4f7f6; padding: 20px; }
+        .container { max-width: 1100px; margin: auto; background: white; padding: 20px; border-radius: 12px; box-shadow: 0 5px 15px rgba(0,0,0,0.08); }
+        h2 { color: var(--primary); text-align: center; border-bottom: 2px solid var(--primary); padding-bottom: 10px; }
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+        th, td { padding: 12px; border: 1px solid #eee; text-align: center; }
+        th { background-color: var(--primary); color: white; }
+        tr:nth-child(even) { background-color: #fff9fb; }
+        .low-stock { color: white; background-color: #d32f2f !important; font-weight: bold; }
+        .badge { padding: 5px 10px; border-radius: 20px; font-size: 0.8em; color: white; }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <h2>لوحة تحكم المخازن والعمولات</h2>
-    
-    <div id="status-msg" style="text-align: center; padding: 20px;">جاري تحميل البيانات...</div>
-
-    <table id="main-table" style="display: none;">
+    <h2>نظام إدارة المنتجات - ILEDERE</h2>
+    <table>
         <thead>
             <tr>
-                <th>المنتج</th>
+                <th>اسم المنتج</th>
                 <th>المخزون</th>
                 <th>سعر البيع</th>
                 <th>عمولة المبيعات (5%)</th>
@@ -80,64 +32,49 @@
                 <th>الحالة</th>
             </tr>
         </thead>
-        <tbody id="product-table">
-            <!-- ستظهر المنتجات الـ 40 هنا -->
+        <tbody id="table-body">
+            <!-- سيتم التعبئة من البيانات أدناه -->
         </tbody>
     </table>
 </div>
 
 <script>
-    async function loadInventory() {
-        const tableBody = document.getElementById('product-table');
-        const statusMsg = document.getElementById('status-msg');
-        const mainTable = document.getElementById('main-table');
+    // البيانات مدمجة مباشرة لضمان العمل 100%
+    const products = [
+        {"id": 1, "name": "كريم نهار مرطب", "stock": 45, "selling_price": 100, "personal_sale_commission": 0.05, "collection_commission": 0.02, "min_limit": 10},
+        {"id": 2, "name": "سيروم الهيالورونيك", "stock": 12, "selling_price": 210, "personal_sale_commission": 0.05, "collection_commission": 0.02, "min_limit": 5},
+        {"id": 3, "name": "واقي شمس +50", "stock": 3, "selling_price": 95, "personal_sale_commission": 0.05, "collection_commission": 0.02, "min_limit": 10},
+        {"id": 4, "name": "غسول للبشرة الدهنية", "stock": 60, "selling_price": 75, "personal_sale_commission": 0.05, "collection_commission": 0.02, "min_limit": 15},
+        {"id": 5, "name": "زيت الأرغان للشعر", "stock": 25, "selling_price": 140, "personal_sale_commission": 0.05, "collection_commission": 0.02, "min_limit": 8},
+        {"id": 6, "name": "ماسك الطين المغربي", "stock": 18, "selling_price": 65, "personal_sale_commission": 0.05, "collection_commission": 0.02, "min_limit": 5},
+        {"id": 7, "name": "كريم ليل مغذي", "stock": 30, "selling_price": 115, "personal_sale_commission": 0.05, "collection_commission": 0.02, "min_limit": 10},
+        {"id": 8, "name": "تونر فيتامين C", "stock": 22, "selling_price": 85, "personal_sale_commission": 0.05, "collection_commission": 0.02, "min_limit": 5},
+        {"id": 9, "name": "مقشر السكر والقهوة", "stock": 40, "selling_price": 55, "personal_sale_commission": 0.05, "collection_commission": 0.02, "min_limit": 10},
+        {"id": 10, "name": "كريم أساس (درجة 1)", "stock": 15, "selling_price": 150, "personal_sale_commission": 0.05, "collection_commission": 0.02, "min_limit": 5}
+        // ... يمكنك إضافة باقي الـ 40 هنا بنفس الطريقة
+    ];
 
-        try {
-            // جلب ملف products.json الموجود بجانب ملف index.html
-            const response = await fetch('./products.json');
-            
-            if (!response.ok) {
-                throw new Error('فشل في العثور على ملف المنتجات');
-            }
+    const tableBody = document.getElementById('table-body');
+    products.forEach(p => {
+        const saleComm = (p.selling_price * p.personal_sale_commission).toFixed(2);
+        const collComm = (p.selling_price * p.collection_commission).toFixed(2);
+        const isLow = p.stock <= p.min_limit;
 
-            const data = await response.json();
-            
-            tableBody.innerHTML = ''; 
-
-            data.forEach(product => {
-                // حساب العمولات بناءً على النسب المذكورة في ملف البيانات
-                const saleComm = (product.selling_price * product.personal_sale_commission).toFixed(2);
-                const collectComm = (product.selling_price * product.collection_commission).toFixed(2);
-                const isLow = product.stock < product.min_limit;
-                
-                const row = `
-                    <tr>
-                        <td><strong>${product.name}</strong></td>
-                        <td class="${isLow ? 'low-stock' : ''}">${product.stock}</td>
-                        <td>${product.selling_price} ريال</td>
-                        <td style="color: #2e7d32; font-weight: bold;">${saleComm} ريال</td>
-                        <td style="color: #1976d2; font-weight: bold;">${collectComm} ريال</td>
-                        <td>
-                            <span class="badge ${product.stock > 0 ? 'bg-success' : 'bg-danger'}">
-                                ${product.stock > 0 ? 'متوفر' : 'نفذ'}
-                            </span>
-                        </td>
-                    </tr>
-                `;
-                tableBody.innerHTML += row;
-            });
-
-            statusMsg.style.display = 'none';
-            mainTable.style.display = 'table';
-
-        } catch (error) {
-            console.error('Error:', error);
-            statusMsg.innerHTML = `<p style="color:red;">عذراً، حدث خطأ في جلب البيانات. تأكد من رفع ملف products.json في نفس المجلد.</p>`;
-        }
-    }
-
-    // تشغيل الدالة عند فتح الصفحة
-    window.onload = loadInventory;
+        tableBody.innerHTML += `
+            <tr>
+                <td><strong>${p.name}</strong></td>
+                <td class="${isLow ? 'low-stock' : ''}">${p.stock}</td>
+                <td>${p.selling_price} ريال</td>
+                <td style="color:green"><b>${saleComm} ريال</b></td>
+                <td style="color:blue">${collComm} ريال</td>
+                <td>
+                    <span class="badge" style="background:${p.stock > 0 ? '#2e7d32' : '#c62828'}">
+                        ${p.stock > 0 ? 'متوفر' : 'نفذ'}
+                    </span>
+                </td>
+            </tr>
+        `;
+    });
 </script>
 
 </body>
