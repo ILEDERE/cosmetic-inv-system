@@ -30,7 +30,7 @@
 
     <script>
     // هذه الوظيفة تقوم بجلب البيانات من ملف JSON
-    fetch('products.json')
+    fetch('./products.json')
         .then(response => response.json())
         .then(data => {
             const tableBody = document.getElementById('product-table');
