@@ -28,31 +28,39 @@
         </tbody>
     </table>
 
-    <script>
-    // هذه الوظيفة تقوم بجلب البيانات من ملف JSON
-    fetch('./products.json')
-        .then(response => response.json())
-        .then(data => {
-            const tableBody = document.getElementById('product-table');
-            tableBody.innerHTML = ''; // تنظيف الجدول أولاً
+   <script>
+        // دالة لجلب البيانات وعرضها في الجدول
+        async function loadProducts() {
+            try {
+                const response = await fetch('products.json');
+                if (!response.ok) throw new Error('تعذر تحميل الملف');
+                
+                const data = await response.json();
+                const tableBody = document.getElementById('product-table');
+                tableBody.innerHTML = ''; 
 
-            data.forEach(product => {
-                const row = `
-                    <tr>
-                        <td>${product.name}</td>
-                        <td class="${product.stock < product.min_limit ? 'low-stock' : ''}">
-                            ${product.stock}
-                        </td>
-                        <td>${product.selling_price} ريال</td>
-                        <td>${(product.selling_price * product.personal_sale_commission).toFixed(2)} ريال</td>
-                        <td>${product.stock > 0 ? 'متوفر' : 'نفذت الكمية'}</td>
-                    </tr>
-                `;
-                tableBody.innerHTML += row;
-            });
-        })
-        .catch(error => console.error('خطأ في جلب البيانات:', error));
-</script>
+                data.forEach(product => {
+                    const commission = (product.selling_price * product.personal_sale_commission).toFixed(2);
+                    const row = `
+                        <tr>
+                            <td>${product.name}</td>
+                            <td style="color: ${product.stock < product.min_limit ? 'red' : 'black'}; font-weight: bold;">
+                                ${product.stock}
+                            </td>
+                            <td>${product.selling_price} ريال</td>
+                            <td>${commission} ريال</td>
+                            <td>${product.stock > 0 ? 'متوفر' : 'نفذت الكمية'}</td>
+                        </tr>
+                    `;
+                    tableBody.innerHTML += row;
+                });
+            } catch (error) {
+                console.error('خطأ في النظام:', error);
+            }
+        }
+
+        // تشغيل الدالة فور تحميل الصفحة
+        window.onload = loadProducts;
     </script>
 </body>
 </html>
