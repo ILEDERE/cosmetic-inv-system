@@ -1,0 +1,11 @@
+[
+  {
+    "id": 1,
+    "product_name": "كريم العناية الفائق",
+    "stock": 100,
+    "cost_price": 50,
+    "selling_price": 120,
+    "my_commission_per_sale": 5,
+    "collection_status": "pending"
+  }
+]
