@@ -3,50 +3,57 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>نظام ILEDERE المتكامل للمستودعات</title>
-    <!-- مكتبات Firebase -->
+    <title>نظام ILEDERE لإدارة المستحضرات</title>
+    <!-- مكتبات Firebase السحابية -->
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
     <style>
-        :root { --primary: #d81b60; --secondary: #1976d2; --success: #2e7d32; --dark: #2c3e50; }
-        body { font-family: 'Segoe UI', Tahoma, sans-serif; background: #f0f2f5; margin: 0; padding: 15px; }
-        .container { max-width: 1100px; margin: auto; background: white; padding: 20px; border-radius: 15px; box-shadow: 0 4px 20px rgba(0,0,0,0.1); }
+        :root { --primary: #d81b60; --secondary: #1976d2; --success: #2e7d32; --dark: #2c3e50; --bg: #f4f7f6; }
+        body { font-family: 'Segoe UI', Tahoma, sans-serif; background: var(--bg); margin: 0; padding: 10px; }
+        .container { max-width: 1200px; margin: auto; background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
+        
+        /* الترويسة والحالة */
+        .header { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid var(--primary); padding-bottom: 10px; margin-bottom: 20px; }
+        #conn-status { font-size: 0.85em; padding: 5px 10px; border-radius: 20px; }
         
         /* التبويبات */
-        .tabs { display: flex; gap: 10px; margin-bottom: 20px; border-bottom: 2px solid #eee; padding-bottom: 10px; }
-        .tab-btn { flex: 1; padding: 12px; border: none; background: #e0e0e0; cursor: pointer; font-weight: bold; border-radius: 8px; transition: 0.3s; }
+        .tabs { display: flex; gap: 8px; margin-bottom: 20px; }
+        .tab-btn { flex: 1; padding: 12px; border: none; background: #ddd; cursor: pointer; font-weight: bold; border-radius: 6px; transition: 0.3s; }
         .tab-btn.active { background: var(--primary); color: white; }
         
         .content { display: none; }
         .content.active { display: block; }
 
         /* الجداول */
-        table { width: 100%; border-collapse: collapse; margin-top: 15px; font-size: 0.9em; }
-        th { background: var(--dark); color: white; padding: 12px; sticky: top; }
-        td { padding: 10px; border-bottom: 1px solid #eee; text-align: center; }
-        tr:hover { background: #f9f9f9; }
-        .low-stock { color: white; background: #d32f2f !important; font-weight: bold; border-radius: 4px; }
+        table { width: 100%; border-collapse: collapse; margin-top: 10px; background: white; }
+        th { background: var(--dark); color: white; padding: 12px; font-size: 0.9em; }
+        td { padding: 10px; border: 1px solid #eee; text-align: center; font-size: 0.9em; }
+        tr:nth-child(even) { background: #fafafa; }
+        .low-stock { background: #ffebee !important; color: #c62828; font-weight: bold; }
 
         /* النماذج */
-        .form-box { background: #f9f9f9; padding: 20px; border-radius: 10px; border: 1px solid #ddd; margin-bottom: 20px; }
-        input, select { padding: 10px; margin: 5px; border: 1px solid #ccc; border-radius: 5px; width: 180px; }
-        .btn-action { background: var(--secondary); color: white; border: none; padding: 10px 25px; border-radius: 5px; cursor: pointer; }
+        .admin-panel { background: #f9f9f9; padding: 15px; border-radius: 8px; border: 1px solid #ddd; margin-top: 20px; }
+        .input-group { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; }
+        input, select { padding: 10px; border: 1px solid #ccc; border-radius: 4px; flex: 1; min-width: 150px; }
+        .btn-save { background: var(--success); color: white; border: none; padding: 10px 30px; border-radius: 4px; cursor: pointer; font-weight: bold; }
         
-        #conn-status { font-size: 0.8em; color: gray; margin-bottom: 10px; }
+        @media (max-width: 600px) { th, td { font-size: 0.75em; padding: 5px; } .input-group { flex-direction: column; } }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <div id="conn-status">جاري التحقق من الاتصال بالسحابة...</div>
-    <h2 style="color: var(--primary);">نظام إدارة المنتجات والعمولات - ILEDERE</h2>
-
-    <div class="tabs">
-        <button class="tab-btn active" onclick="showTab('view')">📦 عرض المخزون</button>
-        <button class="tab-btn" onclick="showTab('admin')">🛒 إدارة المبيعات والفواتير</button>
+    <div class="header">
+        <h2 style="margin:0; color: var(--primary);">ILEDERE ERP</h2>
+        <div id="conn-status" style="background: #eee;">جاري الاتصال...</div>
     </div>
 
-    <!-- قسم العرض (للمناديب والمحاسب) -->
+    <div class="tabs">
+        <button class="tab-btn active" onclick="showTab('view')">📦 المستودع</button>
+        <button class="tab-btn" onclick="showTab('admin')">⚙️ الإدارة والمناديب</button>
+    </div>
+
+    <!-- واجهة عرض المخزون -->
     <div id="view" class="content active">
         <table id="productsTable">
             <thead>
@@ -55,47 +62,57 @@
                     <th>المخزن</th>
                     <th>السعر</th>
                     <th>عمولة البيع (5%)</th>
-                    <th>الحالة</th>
+                    <th>عمولة التحصيل (2%)</th>
                 </tr>
             </thead>
-            <tbody id="inventoryBody">
-                <!-- البيانات تظهر هنا تلقائياً -->
-            </tbody>
+            <tbody id="inventoryBody"></tbody>
         </table>
     </div>
 
-    <!-- قسم الإدارة (للمحاسب فقط) -->
+    <!-- واجهة الإدارة والعمليات -->
     <div id="admin" class="content">
-        <div class="form-box">
-            <h3>تسجيل حركة مخزنية</h3>
-            <select id="prodSelect"></select>
-            <input type="number" id="qtyInput" placeholder="الكمية">
-            <select id="typeSelect">
-                <option value="out">مبيعات (خصم من المخزن)</option>
-                <option value="in">توريد (إضافة للمخزن)</option>
-            </select>
-            <button class="btn-action" onclick="handleTransaction()">تنفيذ الحفظ</button>
+        <div class="admin-panel">
+            <h3>تسجيل حركة (فاتورة / جرد مندوب)</h3>
+            <div class="input-group">
+                <select id="prodSelect"></select>
+                <input type="number" id="qtyInput" placeholder="الكمية">
+                <select id="typeSelect">
+                    <option value="out">مبيعات (خصم من المخزن)</option>
+                    <option value="in">توريد (إضافة للمخزن)</option>
+                </select>
+                <button class="btn-save" onclick="handleTransaction()">حفظ العملية</button>
+            </div>
         </div>
-        
-        <!-- زر لرفع البيانات لأول مرة فقط -->
-        <button onclick="seedInitialData()" style="font-size: 0.7em; opacity: 0.5;">(إعادة ضبط المنتجات الـ 40)</button>
+
+        <div style="margin-top: 30px; text-align: center;">
+            <p style="color: #666; font-size: 0.8em;">إعدادات متقدمة</p>
+            <button onclick="seedInitialData()" style="padding: 5px 15px; cursor: pointer; opacity: 0.6;">إعادة ضبط الـ 40 منتجاً</button>
+        </div>
     </div>
 </div>
 
 <script>
-    // --- الربط بقاعدتك (Firebase Config) ---
+    // إعدادات Firebase الخاصة بك
     const firebaseConfig = {
         databaseURL: "https://cosmetic-system-ad804-default-rtdb.firebaseio.com/" 
     };
     firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
 
-    // فحص الاتصال
+    // مراقبة حالة الاتصال
     db.ref('.info/connected').on('value', (snap) => {
-        document.getElementById('conn-status').innerHTML = snap.val() ? "✅ متصل بالسحابة" : "❌ غير متصل";
+        const status = document.getElementById('conn-status');
+        if (snap.val() === true) {
+            status.innerHTML = "✅ سحابي متصل";
+            status.style.background = "#e8f5e9";
+            status.style.color = "#2e7d32";
+        } else {
+            status.innerHTML = "❌ غير متصل";
+            status.style.background = "#ffebee";
+            status.style.color = "#c62828";
+        }
     });
 
-    // تبديل الأقسام
     function showTab(id) {
         document.querySelectorAll('.content').forEach(c => c.classList.remove('active'));
         document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
@@ -103,7 +120,7 @@
         event.currentTarget.classList.add('active');
     }
 
-    // جلب البيانات وتحديث الجدول فوراً
+    // جلب البيانات لحظياً
     db.ref('products').on('value', (snapshot) => {
         const products = snapshot.val();
         const body = document.getElementById('inventoryBody');
@@ -111,57 +128,68 @@
         body.innerHTML = '';
         select.innerHTML = '';
 
+        if (!products) {
+            body.innerHTML = '<tr><td colspan="5">لا توجد بيانات. اذهب للإدارة واضغط "إعادة ضبط".</td></tr>';
+            return;
+        }
+
         for (let key in products) {
             let p = products[key];
             let isLow = p.stock <= 5;
+            let sellComm = (p.selling_price * 0.05).toFixed(2);
+            let collComm = (p.selling_price * 0.02).toFixed(2);
             
             body.innerHTML += `
-                <tr>
+                <tr class="${isLow ? 'low-stock' : ''}">
                     <td><strong>${p.name}</strong></td>
-                    <td class="${isLow ? 'low-stock' : ''}">${p.stock}</td>
+                    <td>${p.stock}</td>
                     <td>${p.selling_price} ريال</td>
-                    <td style="color:green">${(p.selling_price * 0.05).toFixed(2)} ريال</td>
-                    <td>${p.stock > 0 ? '✅ متوفر' : '❌ نفذ'}</td>
+                    <td>${sellComm} ريال</td>
+                    <td>${collComm} ريال</td>
                 </tr>
             `;
             select.innerHTML += `<option value="${key}">${p.name}</option>`;
         }
     });
 
-    // تنفيذ عمليات البيع والشراء
+    // معالجة المبيعات والتوريد
     function handleTransaction() {
         const key = document.getElementById('prodSelect').value;
         const qty = parseInt(document.getElementById('qtyInput').value);
         const type = document.getElementById('typeSelect').value;
 
-        if(!qty || qty <= 0) return alert('أدخل كمية صحيحة');
+        if(!qty || qty <= 0) { alert('الرجاء إدخال كمية صحيحة'); return; }
 
         db.ref('products/' + key).once('value').then(snap => {
-            let currentStock = snap.val().stock;
-            let newStock = (type === 'in') ? currentStock + qty : currentStock - qty;
+            const currentStock = snap.val().stock;
+            const newStock = (type === 'in') ? currentStock + qty : currentStock - qty;
             
-            if(newStock < 0) return alert('عذراً، المخزون لا يكفي!');
+            if(newStock < 0) { alert('المخزون غير كافٍ لهذه العملية!'); return; }
 
             db.ref('products/' + key).update({ stock: newStock })
                 .then(() => {
-                    alert('تم الحفظ بنجاح');
+                    alert('تم التحديث بنجاح');
                     document.getElementById('qtyInput').value = '';
                 });
         });
     }
 
-    // رفع الـ 40 منتج لأول مرة (تستخدمها مرة واحدة فقط)
+    // بيانات المنتجات الـ 40 الأساسية
     function seedInitialData() {
-        if(!confirm('سيتم إعادة ضبط جميع الكميات، هل أنت متأكد؟')) return;
-        const data = {
-            "p1": { "name": "كريم نهار مرطب", "stock": 45, "selling_price": 100 },
-            "p2": { "name": "سيروم الهيالورونيك", "stock": 12, "selling_price": 210 },
-            "p3": { "name": "واقي شمس +50", "stock": 3, "selling_price": 95 },
-            "p4": { "name": "غسول للبشرة الدهنية", "stock": 60, "selling_price": 75 },
-            "p5": { "name": "زيت الأرغان للشعر", "stock": 25, "selling_price": 140 }
-            // يمكنك تكملة الـ 40 هنا بنفس النمط
-        };
-        db.ref('products').set(data);
+        if(!confirm('هل تريد مسح البيانات الحالية وتنزيل قائمة المنتجات الـ 40؟')) return;
+        
+        const initialData = {};
+        for(let i=1; i<=40; i++) {
+            initialData['p'+i] = {
+                "name": "منتج تجميلي رقم " + i,
+                "stock": 100,
+                "selling_price": (50 + (i * 5)) 
+            };
+        }
+        
+        db.ref('products').set(initialData)
+            .then(() => alert('تم رفع 40 منتجاً لقاعدة البيانات بنجاح!'))
+            .catch(err => alert('فشل الرفع: ' + err.message));
     }
 </script>
 
