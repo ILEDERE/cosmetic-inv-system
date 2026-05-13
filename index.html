@@ -3,119 +3,158 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>نظام ILEDERE PRO - الإدارة الشاملة</title>
+    <title>ILEDERE WMS - إدارة المخزون المتقدمة</title>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
     <style>
         :root { --primary: #d81b60; --secondary: #1976d2; --success: #2e7d32; --dark: #2c3e50; --bg: #f4f7f6; }
         body { font-family: 'Segoe UI', sans-serif; background: var(--bg); margin: 0; padding: 10px; }
-        .container { max-width: 1200px; margin: auto; background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
+        .container { max-width: 1300px; margin: auto; background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
         .header { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid var(--primary); padding-bottom: 10px; margin-bottom: 20px; }
-        #conn-status { font-size: 0.85em; padding: 5px 10px; border-radius: 20px; }
-        .tabs { display: flex; gap: 8px; margin-bottom: 20px; overflow-x: auto; }
-        .tab-btn { flex: 1; min-width: 100px; padding: 12px; border: none; background: #ddd; cursor: pointer; font-weight: bold; border-radius: 6px; }
+        .tabs { display: flex; gap: 8px; margin-bottom: 20px; overflow-x: auto; white-space: nowrap; }
+        .tab-btn { flex: 1; padding: 12px 20px; border: none; background: #ddd; cursor: pointer; font-weight: bold; border-radius: 6px; }
         .tab-btn.active { background: var(--primary); color: white; }
         .content { display: none; }
         .content.active { display: block; }
-        table { width: 100%; border-collapse: collapse; margin-top: 10px; background: white; }
-        th { background: var(--dark); color: white; padding: 12px; font-size: 0.9em; }
-        td { padding: 10px; border: 1px solid #eee; text-align: center; font-size: 0.9em; }
-        .form-box { background: #f9f9f9; padding: 15px; border-radius: 8px; border: 1px solid #ddd; margin-bottom: 20px; }
-        .input-group { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 10px; }
-        input, select { padding: 10px; border: 1px solid #ccc; border-radius: 4px; flex: 1; min-width: 120px; }
-        .btn { border: none; padding: 10px 20px; border-radius: 4px; cursor: pointer; font-weight: bold; color: white; }
-        .btn-add { background: var(--success); }
-        .btn-edit { background: var(--secondary); font-size: 0.8em; }
-        .btn-del { background: #d32f2f; font-size: 0.8em; }
-        .summary-bar { background: var(--dark); color: white; padding: 15px; border-radius: 8px; margin-top: 20px; display: flex; justify-content: space-around; flex-wrap: wrap; }
+        
+        /* الجداول والنماذج */
+        table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+        th { background: var(--dark); color: white; padding: 12px; font-size: 0.85em; }
+        td { padding: 10px; border: 1px solid #eee; text-align: center; font-size: 0.85em; }
+        .form-box { background: #fdfdfd; padding: 20px; border-radius: 8px; border: 2px solid #eee; margin-bottom: 25px; }
+        .input-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; }
+        .input-group { display: flex; flex-direction: column; }
+        label { font-size: 0.8em; font-weight: bold; margin-bottom: 5px; color: var(--dark); }
+        input, select { padding: 10px; border: 1px solid #ccc; border-radius: 5px; }
+        
+        /* الأزرار */
+        .btn { border: none; padding: 10px 15px; border-radius: 5px; cursor: pointer; font-weight: bold; color: white; transition: 0.2s; }
+        .btn-main { background: var(--secondary); width: 100%; margin-top: 15px; }
+        .btn-edit { background: #ffa000; color: #fff; }
+        .btn-del { background: #d32f2f; }
+        .badge { padding: 3px 8px; border-radius: 10px; font-size: 0.8em; background: #eee; }
     </style>
 </head>
 <body>
 
 <div class="container">
     <div class="header">
-        <h2 style="margin:0; color: var(--primary);">ILEDERE PRO</h2>
-        <div id="conn-status">جاري الاتصال...</div>
+        <h2 style="margin:0; color: var(--primary);">ILEDERE WMS <span style="font-size: 0.5em; color: #666;">v2.0</span></h2>
+        <div id="conn-status" style="font-size: 0.8em;">...</div>
     </div>
 
     <div class="tabs">
-        <button class="tab-btn active" onclick="showTab('view')">📦 المخزن</button>
-        <button class="tab-btn" onclick="showTab('admin')">🛒 حركة مبيعات</button>
-        <button class="tab-btn" onclick="showTab('setup')">🛠️ إدارة المنتجات</button>
-        <button class="tab-btn" onclick="showTab('history')">📜 السجل</button>
+        <button class="tab-btn active" onclick="showTab('inventory')">📦 المستودع</button>
+        <button class="tab-btn" onclick="showTab('movements')">🛒 حركة مبيعات</button>
+        <button class="tab-btn" onclick="showTab('management')">🛠️ إدارة البيانات</button>
+        <button class="tab-btn" onclick="showTab('logs')">📜 السجل الكامل</button>
     </div>
 
-    <!-- المخزن -->
-    <div id="view" class="content active">
-        <table id="productsTable">
+    <!-- 1. واجهة المستودع التفصيلية -->
+    <div id="inventory" class="content active">
+        <table>
             <thead>
                 <tr>
-                    <th>المنتج</th>
+                    <th>الكود / المنتج</th>
+                    <th>رقم الباتش</th>
+                    <th>تاريخ الانتهاء</th>
                     <th>المخزن</th>
+                    <th>الموقع</th>
                     <th>السعر</th>
-                    <th>القيمة الإجمالية</th>
                 </tr>
             </thead>
             <tbody id="inventoryBody"></tbody>
         </table>
-        <div class="summary-bar" id="summaryBar">
-            <span>إجمالي قطع المخزن: <b id="totalQty">0</b></span>
-            <span>إجمالي قيمة العهدة: <b id="totalValue">0</b> ريال</span>
+    </div>
+
+    <!-- 2. حركة المبيعات -->
+    <div id="movements" class="content">
+        <div class="form-box">
+            <h3>تسجيل خروج/دخول منتج</h3>
+            <div class="input-grid">
+                <div class="input-group">
+                    <label>اختر المنتج والباتش</label>
+                    <select id="moveProdSelect"></select>
+                </div>
+                <div class="input-group">
+                    <label>الكمية</label>
+                    <input type="number" id="moveQty" placeholder="0">
+                </div>
+                <div class="input-group">
+                    <label>نوع الحركة</label>
+                    <select id="moveType">
+                        <option value="out">مبيعات (صادر)</option>
+                        <option value="in">توريد (وارد)</option>
+                    </select>
+                </div>
+            </div>
+            <button class="btn btn-main" onclick="processMovement()">تحديث المخزون وتسجيل العملية</button>
         </div>
     </div>
 
-    <!-- المبيعات -->
-    <div id="admin" class="content">
-        <div class="form-box">
-            <h3>تسجيل مبيعات / توريد</h3>
-            <div class="input-group">
-                <select id="prodSelectAdmin"></select>
-                <input type="number" id="qtyInput" placeholder="الكمية">
-                <select id="typeSelect">
-                    <option value="out">مبيعات (خصم)</option>
-                    <option value="in">توريد (إضافة)</option>
-                </select>
-                <button class="btn btn-add" onclick="handleTransaction()">حفظ العملية</button>
+    <!-- 3. إدارة البيانات (إضافة وتعديل) -->
+    <div id="management" class="content">
+        <div class="form-box" id="productFormContainer">
+            <h3 id="formTitle">➕ إضافة/تعديل منتج في النظام</h3>
+            <input type="hidden" id="editKey">
+            <div class="input-grid">
+                <div class="input-group">
+                    <label>اسم المنتج</label>
+                    <input type="text" id="pName" placeholder="مثلاً: سيروم الهيالورونيك">
+                </div>
+                <div class="input-group">
+                    <label>رقم المنتج (SKU)</label>
+                    <input type="text" id="pSKU" placeholder="ID-100">
+                </div>
+                <div class="input-group">
+                    <label>رقم الباتش (Batch)</label>
+                    <input type="text" id="pBatch" placeholder="B-2024-01">
+                </div>
+                <div class="input-group">
+                    <label>تاريخ الانتهاء</label>
+                    <input type="date" id="pExpiry">
+                </div>
+                <div class="input-group">
+                    <label>كود المستودع / الرف</label>
+                    <input type="text" id="pWarehouse" placeholder="WH-A1">
+                </div>
+                <div class="input-group">
+                    <label>الكمية الحالية</label>
+                    <input type="number" id="pStock" placeholder="0">
+                </div>
+                <div class="input-group">
+                    <label>سعر البيع</label>
+                    <input type="number" id="pPrice" placeholder="0.00">
+                </div>
             </div>
+            <button class="btn btn-main" style="background: var(--success);" onclick="saveProduct()">حفظ بيانات المنتج بالسحابة</button>
+            <button id="cancelEdit" class="btn" style="background:#666; display:none; width:100%; margin-top:5px;" onclick="resetForm()">إلغاء التعديل</button>
         </div>
-    </div>
 
-    <!-- إدارة المنتجات (الطلب الجديد) -->
-    <div id="setup" class="content">
-        <div class="form-box">
-            <h3>➕ إضافة منتج جديد للقائمة</h3>
-            <div class="input-group">
-                <input type="text" id="newName" placeholder="اسم المنتج">
-                <input type="number" id="newStock" placeholder="الكمية الافتتاحية">
-                <input type="number" id="newPrice" placeholder="السعر">
-                <button class="btn btn-add" onclick="addNewProduct()">إضافة للمنظومة</button>
-            </div>
-        </div>
-        <h3>📝 تعديل أو حذف المنتجات الحالية</h3>
-        <table id="setupTable">
+        <table>
             <thead>
                 <tr>
-                    <th>اسم المنتج</th>
-                    <th>السعر</th>
-                    <th>إجراءات</th>
+                    <th>المنتج</th>
+                    <th>الباتش</th>
+                    <th>الإجراءات</th>
                 </tr>
             </thead>
-            <tbody id="setupBody"></tbody>
+            <tbody id="mgmtTableBody"></tbody>
         </table>
     </div>
 
-    <!-- السجل -->
-    <div id="history" class="content">
-        <table id="historyTable">
+    <!-- 4. السجل الكامل -->
+    <div id="logs" class="content">
+        <table>
             <thead>
                 <tr>
-                    <th>الوقت</th>
+                    <th>التاريخ والوقت</th>
                     <th>المنتج</th>
-                    <th>النوع</th>
                     <th>الكمية</th>
+                    <th>النوع</th>
                 </tr>
             </thead>
-            <tbody id="historyBody"></tbody>
+            <tbody id="logsBody"></tbody>
         </table>
     </div>
 </div>
@@ -125,12 +164,7 @@
     firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
 
-    db.ref('.info/connected').on('value', snap => {
-        const s = document.getElementById('conn-status');
-        s.innerHTML = snap.val() ? "✅ متصل" : "❌ منقطع";
-        s.style.background = snap.val() ? "#e8f5e9" : "#ffebee";
-    });
-
+    // التبديل بين التبويبات
     function showTab(id) {
         document.querySelectorAll('.content').forEach(c => c.classList.remove('active'));
         document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
@@ -138,86 +172,129 @@
         event.currentTarget.classList.add('active');
     }
 
-    // تحديث البيانات الشامل
+    // مزامنة البيانات اللحظية
     db.ref('products').on('value', snapshot => {
         const products = snapshot.val();
         const invBody = document.getElementById('inventoryBody');
-        const setupBody = document.getElementById('setupBody');
-        const selAdmin = document.getElementById('prodSelectAdmin');
+        const mgmtBody = document.getElementById('mgmtTableBody');
+        const moveSelect = document.getElementById('moveProdSelect');
         
-        invBody.innerHTML = ''; setupBody.innerHTML = ''; selAdmin.innerHTML = '';
-        let totalQ = 0, totalV = 0;
+        invBody.innerHTML = ''; mgmtBody.innerHTML = ''; moveSelect.innerHTML = '';
 
         for (let key in products) {
             let p = products[key];
-            let rowVal = p.stock * p.selling_price;
-            totalQ += parseInt(p.stock);
-            totalV += rowVal;
+            // عرض المستودع
+            invBody.innerHTML += `
+                <tr>
+                    <td><b>${p.name}</b><br><small class="badge">${p.sku || 'N/A'}</small></td>
+                    <td>${p.batch || '-'}</td>
+                    <td>${p.expiry || '-'}</td>
+                    <td style="color:var(--primary); font-weight:bold;">${p.stock}</td>
+                    <td>${p.warehouse || '-'}</td>
+                    <td>${p.selling_price} ر.ق</td>
+                </tr>`;
+            
+            // جدول الإدارة
+            mgmtBody.innerHTML += `
+                <tr>
+                    <td>${p.name}</td>
+                    <td>${p.batch}</td>
+                    <td>
+                        <button class="btn btn-edit" onclick="prepareEdit('${key}')">تعديل البيانات</button>
+                        <button class="btn btn-del" onclick="deleteProd('${key}')">حذف</button>
+                    </td>
+                </tr>`;
 
-            invBody.innerHTML += `<tr><td>${p.name}</td><td>${p.stock}</td><td>${p.selling_price}</td><td>${rowVal}</td></tr>`;
-            setupBody.innerHTML += `<tr>
-                <td>${p.name}</td>
-                <td>${p.selling_price}</td>
-                <td>
-                    <button class="btn btn-edit" onclick="editProduct('${key}', '${p.name}', ${p.selling_price})">تعديل</button>
-                    <button class="btn btn-del" onclick="deleteProduct('${key}')">حذف</button>
-                </td>
-            </tr>`;
-            selAdmin.innerHTML += `<option value="${key}">${p.name}</option>`;
+            // قائمة الحركات
+            moveSelect.innerHTML += `<option value="${key}">${p.name} (Batch: ${p.batch})</option>`;
         }
-        document.getElementById('totalQty').innerText = totalQ;
-        document.getElementById('totalValue').innerText = totalV.toLocaleString();
     });
 
-    // إضافة منتج جديد
-    function addNewProduct() {
-        const name = document.getElementById('newName').value;
-        const stock = parseInt(document.getElementById('newStock').value);
-        const price = parseInt(document.getElementById('newPrice').value);
-        if(!name || isNaN(stock) || isNaN(price)) return alert('أكمل البيانات');
-        
-        db.ref('products').push({ name, stock, selling_price: price })
-          .then(() => { alert('تمت الإضافة'); document.querySelectorAll('#setup input').forEach(i=>i.value=''); });
-    }
+    // حفظ / تحديث المنتج
+    function saveProduct() {
+        const key = document.getElementById('editKey').value;
+        const data = {
+            name: document.getElementById('pName').value,
+            sku: document.getElementById('pSKU').value,
+            batch: document.getElementById('pBatch').value,
+            expiry: document.getElementById('pExpiry').value,
+            warehouse: document.getElementById('pWarehouse').value,
+            stock: parseInt(document.getElementById('pStock').value),
+            selling_price: parseFloat(document.getElementById('pPrice').value)
+        };
 
-    // حذف منتج
-    function deleteProduct(key) {
-        if(confirm('هل أنت متأكد من حذف المنتج نهائياً؟')) db.ref('products/' + key).remove();
-    }
+        if(!data.name || isNaN(data.stock)) return alert('الرجاء تعبئة الاسم والكمية على الأقل');
 
-    // تعديل منتج
-    function editProduct(key, oldName, oldPrice) {
-        const newName = prompt('اسم المنتج الجديد:', oldName);
-        const newPrice = prompt('السعر الجديد:', oldPrice);
-        if(newName && newPrice) {
-            db.ref('products/' + key).update({ name: newName, selling_price: parseInt(newPrice) });
+        if(key) {
+            db.ref('products/' + key).update(data).then(() => { alert('تم تحديث البيانات'); resetForm(); });
+        } else {
+            db.ref('products').push(data).then(() => { alert('تمت إضافة المنتج الجديد'); resetForm(); });
         }
     }
 
-    // المبيعات والسجل
-    function handleTransaction() {
-        const key = document.getElementById('prodSelectAdmin').value;
-        const qty = parseInt(document.getElementById('qtyInput').value);
-        const type = document.getElementById('typeSelect').value;
-        const name = document.getElementById('prodSelectAdmin').options[document.getElementById('prodSelectAdmin').selectedIndex].text;
-
+    // التحضير للتعديل (تعبئة النموذج)
+    function prepareEdit(key) {
         db.ref('products/' + key).once('value', snap => {
-            const newStock = type === 'in' ? snap.val().stock + qty : snap.val().stock - qty;
-            if(newStock < 0) return alert('المخزون لا يكفي');
+            const p = snap.val();
+            document.getElementById('editKey').value = key;
+            document.getElementById('pName').value = p.name;
+            document.getElementById('pSKU').value = p.sku || '';
+            document.getElementById('pBatch').value = p.batch || '';
+            document.getElementById('pExpiry').value = p.expiry || '';
+            document.getElementById('pWarehouse').value = p.warehouse || '';
+            document.getElementById('pStock').value = p.stock || 0;
+            document.getElementById('pPrice').value = p.selling_price || 0;
             
-            db.ref('products/' + key).update({ stock: newStock });
-            db.ref('history').push({ productName: name, quantity: qty, type, timestamp: new Date().toLocaleString('ar-QA') });
-            alert('تم الحفظ');
+            document.getElementById('formTitle').innerText = "📝 تعديل بيانات المنتج: " + p.name;
+            document.getElementById('cancelEdit').style.display = "block";
+            window.scrollTo(0,0);
         });
     }
 
-    db.ref('history').limitToLast(20).on('value', snap => {
-        const body = document.getElementById('historyBody');
+    function resetForm() {
+        document.getElementById('editKey').value = '';
+        document.querySelectorAll('#productFormContainer input').forEach(i => i.value = '');
+        document.getElementById('formTitle').innerText = "➕ إضافة منتج جديد للقائمة";
+        document.getElementById('cancelEdit').style.display = "none";
+    }
+
+    // معالجة المبيعات (مع تسجيل الباتش في السجل)
+    function processMovement() {
+        const key = document.getElementById('moveProdSelect').value;
+        const qty = parseInt(document.getElementById('moveQty').value);
+        const type = document.getElementById('moveType').value;
+        const pName = document.getElementById('moveProdSelect').options[document.getElementById('moveProdSelect').selectedIndex].text;
+
+        if(!qty || qty <= 0) return alert('أدخل كمية صحيحة');
+
+        db.ref('products/' + key).once('value', snap => {
+            const current = snap.val().stock;
+            const final = type === 'in' ? current + qty : current - qty;
+            if(final < 0) return alert('المخزون غير كافٍ!');
+
+            db.ref('products/' + key).update({ stock: final });
+            db.ref('history').push({
+                productName: pName,
+                quantity: qty,
+                type: type,
+                timestamp: new Date().toLocaleString('ar-QA')
+            });
+            alert('تم تسجيل الحركة');
+            document.getElementById('moveQty').value = '';
+        });
+    }
+
+    // حذف
+    function deleteProd(key) { if(confirm('حذف المنتج نهائياً؟')) db.ref('products/' + key).remove(); }
+
+    // السجل
+    db.ref('history').limitToLast(30).on('value', snap => {
+        const body = document.getElementById('logsBody');
         body.innerHTML = '';
         const data = snap.val();
         if(data) Object.keys(data).reverse().forEach(k => {
             const h = data[k];
-            body.innerHTML += `<tr><td>${h.timestamp}</td><td>${h.productName}</td><td>${h.type==='out'?'خصم':'إضافة'}</td><td>${h.quantity}</td></tr>`;
+            body.innerHTML += `<tr><td>${h.timestamp}</td><td>${h.productName}</td><td>${h.quantity}</td><td>${h.type==='out'?'🔴 مبيعات':'🟢 توريد'}</td></tr>`;
         });
     });
 </script>
